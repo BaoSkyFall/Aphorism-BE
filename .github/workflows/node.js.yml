@@ -1,0 +1,60 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+
+name: Node.js CI
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: aphorism-be
+    # env:
+    #   ADMIN_JWT_SECRET: ${{secrets.ADMIN_JWT_SECRET}}
+    #   NODE_ENV: ${{secrets.NODE_ENV}}
+    #   API_TOKEN_SALT: ${{secrets.API_TOKEN_SALT}}
+    #   APP_KEYS: ${{secrets.APP_KEYS}}
+    #   DATABASE_HOST: ${{secrets.DATABASE_HOST}}
+    #   DATABASE_NAME: ${{secrets.DATABASE_NAME}}
+    #   DATABASE_PASSWORD: ${{secrets.DATABASE_PASSWORD}}
+    #   DATABASE_PORT: ${{secrets.DATABASE_PORT}}
+    #   DATABASE_SSL: ${{secrets.DATABASE_SSL}}
+    #   DATABASE_USERNAME: ${{secrets.DATABASE_USERNAME}}
+    #   HOST: ${{secrets.HOST}}
+    #   JWT_SECRET: ${{secrets.JWT_SECRET}}
+    #   PORT: ${{secrets.PORT}}
+    strategy:
+      matrix:
+        node-version: [16.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    - name: 'Create env file'
+      run: |
+        touch .env
+        echo ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }} >> .env
+        echo NODE_ENV=${{ secrets.NODE_ENV }} >> .env
+        echo API_TOKEN_SALT=${{ secrets.API_TOKEN_SALT }} >> .env
+        echo APP_KEYS=${{ secrets.APP_KEYS }} >> .env
+        echo DATABASE_HOST=${{ secrets.DATABASE_HOST }} >> .env
+        echo DATABASE_NAME=${{ secrets.DATABASE_NAME }} >> .env
+        echo DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} >> .env
+        echo DATABASE_PORT=${{ secrets.DATABASE_PORT }} >> .env
+        echo DATABASE_SSL=${{ secrets.DATABASE_SSL }} >> .env
+        echo DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }} >> .env
+        echo HOST=${{ secrets.HOST }} >> .env
+        echo JWT_SECRET=${{ secrets.JWT_SECRET }} >> .env
+        echo PORT=${{ secrets.PORT }} >> .env
+        cat .env
+    - run: npm ci
+    - run: npm run build --if-present
+    # - run: npm start
+    - run: sudo pm2 restart aphorism-be
